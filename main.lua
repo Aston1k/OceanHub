@@ -63,7 +63,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 local success, err = pcall(function() ScreenGui.Parent = TargetParent end)
 if not success then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- GUI ELEMENTS (Shortened for brevity, same as before)
+-- GUI ELEMENTS
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Name = "MainFrame"
 MainFrame.BackgroundColor3 = Colors.Background
@@ -366,7 +366,6 @@ RunService.Heartbeat:Connect(function()
                 if LootingTime == 0 then LootingTime = tick() + 1.2 end -- Время на лут (1.2 сек)
                 
                 if tick() < LootingTime then
-                    -- Пускаем луч вниз, чтобы найти землю
                     local rayOrigin = Vector3.new(LastTargetPos.X, LastTargetPos.Y + 20, LastTargetPos.Z)
                     local rayDirection = Vector3.new(0, -500, 0)
                     local rayParams = RaycastParams.new()
@@ -374,19 +373,15 @@ RunService.Heartbeat:Connect(function()
                     rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
                     local rayResult = Workspace:Raycast(rayOrigin, rayDirection, rayParams)
-                    
-                    local landY = LastTargetPos.Y -- По дефолту высота моба
-                    if rayResult then
-                        landY = rayResult.Position.Y -- Если нашли землю, берем её высоту
-                    end
+                    local landY = LastTargetPos.Y
+                    if rayResult then landY = rayResult.Position.Y end
 
-                    -- Телепортируемся чуть выше земли (+3.5 студа)
                     root.CFrame = CFrame.new(LastTargetPos.X, landY + 3.5, LastTargetPos.Z)
                     root.AssemblyLinearVelocity = Vector3.new(0,0,0)
                     SText.Text = "LOOTING (GROUND)..."
                     StatusFrame.Visible = true
                 else
-                    LastTargetPos = nil -- Сбор окончен, идем к след цели
+                    LastTargetPos = nil
                     LootingTime = 0
                 end
             else
@@ -438,6 +433,13 @@ CreateButton(PageMisc, "Server Hop", function()
     local Server, Next; repeat local Servers = ListServers(Next); Server = Servers.data; Next = Servers.nextPageCursor; for _, v in pairs(Server) do if v.playing < v.maxPlayers and v.id ~= game.JobId then pcall(function() TeleportService:TeleportToPlaceInstance(_place, v.id, LocalPlayer) end) end end until not Next
 end)
 local PageSet = CreateTab("Settings")
+-- !!! НОВАЯ КНОПКА AFK MODE !!!
+CreateToggle(PageSet, "AFK Mode (FPS Saver 15)", function(val)
+    local s,e = pcall(function()
+        if val then setfpscap(15) else setfpscap(60) end
+    end)
+end)
+
 CreateButton(PageSet, "Unload Script", function() ScreenGui:Destroy(); StatusFrame:Destroy(); if WaterPlatform then WaterPlatform:Destroy() end; Settings.ESP = false; Settings.MobHunt = false end)
 CreateButton(PageSet, "Rejoin", function() if #Players:GetPlayers() <= 1 then LocalPlayer:Kick("\nRejoining..."); task.wait(); TeleportService:Teleport(game.PlaceId, LocalPlayer) else TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end end)
 
